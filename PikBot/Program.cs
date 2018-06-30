@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
@@ -37,22 +38,35 @@ namespace PikBot
             await Task.Delay(-1);
         }
 
-        private Task Log(LogMessage msg)
+        private Task Log(LogMessage message)
         {
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine(message.ToString());
             return Task.CompletedTask;
         }
 
         private async Task MessageReceived(SocketMessage message)
         {
+            if (message.Author.IsBot) return;
+            if (!message.Content.StartsWith(credentials.prefix)) return;
 
-            if (!message.Author.IsBot && message.Content.StartsWith(credentials.prefix))
+            ISocketMessageChannel channel = message.Channel;
+            string[] args = message.Content.Substring(credentials.prefix.Length).Split(' ');
+            string command = args[0];
+
+            if (command == "echo")
             {
-                await message.Channel.SendMessageAsync("I'm listening");
+                string[] echo = new string[args.Length - 1];
+                Array.Copy(args, 1, echo, 0, args.Length - 1);
+
+                await channel.SendMessageAsync(string.Join(" ", echo));
             }
-            else
+
+            if (command == "ping")
             {
-                return;
+                RestUserMessage pingMessage = await channel.SendMessageAsync("pinging");
+                TimeSpan ping = pingMessage.CreatedAt.Subtract(message.CreatedAt);
+
+                await pingMessage.ModifyAsync(msg => msg.Content = ping.TotalMilliseconds.ToString() + "ms");
             }
         }
     }
