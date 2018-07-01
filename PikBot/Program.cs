@@ -17,6 +17,8 @@ namespace PikBot
         }
 
         Credentials credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
+        const string self = "<@377237438529273856>";
+        const string selfNick = "<@!377237438529273856>";
 
         public static void Main(string[] args)
         {
@@ -47,11 +49,27 @@ namespace PikBot
         private async Task MessageReceived(SocketMessage message)
         {
             if (message.Author.IsBot) return;
-            if (!message.Content.StartsWith(credentials.prefix)) return;
+            if (!(
+                message.Content.StartsWith(credentials.prefix) ||
+                message.Content.StartsWith(self) ||
+                message.Content.StartsWith(selfNick)
+                )) return;
 
+            message.Content.Trim();
             ISocketMessageChannel channel = message.Channel;
-            string[] args = message.Content.Substring(credentials.prefix.Length).Split(' ');
+            string[] args;
+
+            if (message.Content.StartsWith(credentials.prefix))
+            {
+                args = message.Content.Substring(credentials.prefix.Length).Split(' ');
+            }
+            else
+            {
+                args = message.Content.Substring(message.Content.StartsWith(self) ? self.Length : selfNick.Length).Trim().Split(' ');
+            }
+
             string command = args[0];
+            await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": " + command));
 
             if (command == "echo")
             {
