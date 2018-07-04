@@ -72,9 +72,7 @@ namespace PikBot
             {
                 Object obj = Enum.Parse(typeof(Commands.Commands), commandName, true);
 
-                char[] commandArray = obj.ToString().ToCharArray();
-                commandArray[0] = char.ToUpper(commandArray[0]);
-                commandName = "PikBot.Commands." + new string(commandArray) + "Command";
+                commandName = "PikBot.Commands." + obj.ToString() + "Command";
             }
             catch
             {

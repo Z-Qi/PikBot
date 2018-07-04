@@ -6,11 +6,11 @@ namespace PikBot.Commands
 {
     public enum Commands
     {
-        commands,
-        echo,
-        ping,
-        help,
-        test,
+        Commands,
+        Echo,
+        Ping,
+        Help,
+        Test,
     }
 
     abstract class Command
