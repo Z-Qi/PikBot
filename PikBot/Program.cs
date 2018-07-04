@@ -5,7 +5,6 @@ using PikBot.Bot;
 using PikBot.Commands;
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace PikBot
@@ -20,8 +19,8 @@ namespace PikBot
 
         private Credentials credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
         private CommandFactory factory = CommandFactory.GetCommandFactory();
-        private const string self = "<@377237438529273856>";
-        private const string selfNick = "<@!377237438529273856>";
+        private readonly string self = "<@377237438529273856>";
+        private readonly string selfNick = "<@!377237438529273856>";
 
         public static void Main(string[] args)
         {
@@ -63,17 +62,25 @@ namespace PikBot
             string[] args;
 
             if (message.Content.StartsWith(credentials.Prefix))
-            {
                 args = message.Content.Substring(credentials.Prefix.Length).Split(' ');
-            }
             else
-            {
                 args = message.Content.Substring(message.Content.StartsWith(self) ? self.Length : selfNick.Length).Trim().Split(' ');
-            }
 
-            char[] commandArray = args[0].ToLower().ToCharArray();
-            commandArray[0] = char.ToUpper(commandArray[0]);
-            string commandName = "PikBot.Commands." + new string(commandArray) + "Command";
+            string commandName = args[0];
+
+            try
+            {
+                Object obj = Enum.Parse(typeof(Commands.Commands), commandName, true);
+
+                char[] commandArray = obj.ToString().ToCharArray();
+                commandArray[0] = char.ToUpper(commandArray[0]);
+                commandName = "PikBot.Commands." + new string(commandArray) + "Command";
+            }
+            catch
+            {
+                await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": Invalid Command " + commandName));
+                return;
+            }
 
             await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": " + commandName));
 
