@@ -1,10 +1,12 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
-using System;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
+using PikBot.Bot;
+using PikBot.Commands;
+using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PikBot
 {
@@ -12,13 +14,14 @@ namespace PikBot
     {
         private class Credentials
         {
-            public string prefix { get; set; }
-            public string token { get; set; }
+            public string Prefix { get; set; }
+            public string Token { get; set; }
         }
 
-        Credentials credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
-        const string self = "<@377237438529273856>";
-        const string selfNick = "<@!377237438529273856>";
+        private Credentials credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
+        private CommandFactory factory = CommandFactory.GetCommandFactory();
+        private const string self = "<@377237438529273856>";
+        private const string selfNick = "<@!377237438529273856>";
 
         public static void Main(string[] args)
         {
@@ -32,7 +35,7 @@ namespace PikBot
             discordClient.Log += Log;
             discordClient.MessageReceived += MessageReceived;
 
-            string token = credentials.token;
+            string token = credentials.Token;
 
             await discordClient.LoginAsync(TokenType.Bot, token);
             await discordClient.StartAsync();
@@ -50,7 +53,7 @@ namespace PikBot
         {
             if (message.Author.IsBot) return;
             if (!(
-                message.Content.StartsWith(credentials.prefix) ||
+                message.Content.StartsWith(credentials.Prefix) ||
                 message.Content.StartsWith(self) ||
                 message.Content.StartsWith(selfNick)
                 )) return;
@@ -59,33 +62,24 @@ namespace PikBot
             ISocketMessageChannel channel = message.Channel;
             string[] args;
 
-            if (message.Content.StartsWith(credentials.prefix))
+            if (message.Content.StartsWith(credentials.Prefix))
             {
-                args = message.Content.Substring(credentials.prefix.Length).Split(' ');
+                args = message.Content.Substring(credentials.Prefix.Length).Split(' ');
             }
             else
             {
                 args = message.Content.Substring(message.Content.StartsWith(self) ? self.Length : selfNick.Length).Trim().Split(' ');
             }
 
-            string command = args[0];
-            await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": " + command));
+            char[] commandArray = args[0].ToLower().ToCharArray();
+            commandArray[0] = char.ToUpper(commandArray[0]);
+            string commandName = "PikBot.Commands." + new string(commandArray) + "Command";
 
-            if (command == "echo")
-            {
-                string[] echo = new string[args.Length - 1];
-                Array.Copy(args, 1, echo, 0, args.Length - 1);
+            await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": " + commandName));
 
-                await channel.SendMessageAsync(string.Join(" ", echo));
-            }
-
-            if (command == "ping")
-            {
-                RestUserMessage pingMessage = await channel.SendMessageAsync("pinging");
-                TimeSpan ping = pingMessage.CreatedAt.Subtract(message.CreatedAt);
-
-                await pingMessage.ModifyAsync(msg => msg.Content = ping.TotalMilliseconds.ToString() + "ms");
-            }
+            args[0] = message.Id.ToString();
+            Command command = factory.GetCommand(channel, new User(message.Author.Id.ToString()), args, commandName);
+            await command.Run();
         }
     }
 }
