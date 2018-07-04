@@ -9,7 +9,7 @@ namespace PikBot.Commands
 {
     class PingCommand : Command
     {
-        protected override string Desc { get { return "Check the ping between you and the bot"; } }
+        protected override string Desc => "Check the ping between you and the bot";
 
         internal PingCommand(ISocketMessageChannel channel, User user, string[] args) : base(channel, user, args) { }
 

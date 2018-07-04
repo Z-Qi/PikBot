@@ -6,7 +6,7 @@ namespace PikBot.Commands
 {
     class HelpCommand : Command
     {
-        protected override string Desc { get { return "Learn more about a command"; } }
+        protected override string Desc => "Learn more about a command";
 
         internal HelpCommand(ISocketMessageChannel channel, User user, string[] args) : base(channel, user, args) { }
 

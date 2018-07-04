@@ -8,7 +8,7 @@ namespace PikBot.Commands
 {
     class EchoCommand : Command
     {
-        protected override string Desc { get { return "Bot will echo what you said"; } }
+        protected override string Desc => "Bot will echo what you said";
 
         internal EchoCommand(ISocketMessageChannel channel, User user, string[] args) : base(channel, user, args) { }
 

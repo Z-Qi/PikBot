@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PikBot.Commands
 {
-    enum Commands
+    public enum Commands
     {
         commands,
         echo,

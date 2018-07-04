@@ -7,7 +7,7 @@ namespace PikBot.Commands
 {
     class CommandsCommand : Command
     {
-        protected override string Desc { get { return "See a list of available commands"; } }
+        protected override string Desc => "See a list of available commands";
 
         internal CommandsCommand(ISocketMessageChannel channel, User user, string[] args) : base(channel, user, args) { }
 

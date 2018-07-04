@@ -6,7 +6,7 @@ namespace PikBot.Commands
 {
     class TestCommand : Command
     {
-        protected override string Desc { get { return "Command for testing things"; } }
+        protected override string Desc => "Command for testing things";
 
         internal TestCommand(ISocketMessageChannel channel, User user, string[] args) : base(channel, user, args) { }
 

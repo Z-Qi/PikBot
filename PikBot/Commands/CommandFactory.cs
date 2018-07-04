@@ -28,8 +28,10 @@ namespace PikBot.Commands
 
             Object obj = constructor.Invoke(new object[] { channel, user, args });
 
-            if (obj is Command) return (Command)obj;
-            else return null;
+            if (obj is Command)
+                return (Command)obj;
+            else
+                return null;
         }
     }
 }
