@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using PikBot.Bot;
+using System;
 using System.Threading.Tasks;
 
 namespace PikBot.Commands
@@ -17,14 +18,23 @@ namespace PikBot.Commands
         {
             if (HasPermissions(user))
             {
-                if (args.Length > 0)
+                if (args.Length > 1)
                 {
-                    char[] commandArray = args[1].ToLower().ToCharArray();
-                    commandArray[0] = char.ToUpper(commandArray[0]);
-                    string commandName = "PikBot.Commands." + new string(commandArray) + "Command";
+                    String commandName = args[1];
 
-                    Command command = CommandFactory.GetCommandFactory().GetCommand(channel, user, new string[0], commandName);
-                    await command.HelpInfo();
+                    try
+                    {
+                        Object obj = Enum.Parse(typeof(Commands), commandName, true);
+
+                        commandName = obj.ToString();
+
+                        Command command = CommandFactory.GetCommandFactory().GetCommand(channel, user, new string[0], commandName);
+                        await command.HelpInfo();
+                    }
+                    catch
+                    {
+                        await channel.SendMessageAsync(":thinking:");
+                    }
                 }
                 else
                 {

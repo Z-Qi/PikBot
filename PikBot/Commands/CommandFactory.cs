@@ -19,6 +19,7 @@ namespace PikBot.Commands
 
         public Command GetCommand(ISocketMessageChannel channel, User user, string[] args, string commandName)
         {
+            commandName = "PikBot.Commands." + commandName + "Command";
             Type commandType = Type.GetType(commandName, true);
             Type[] paramTypes = new Type[] { channel.GetType(), user.GetType(), args.GetType() };
 
