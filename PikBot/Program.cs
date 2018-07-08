@@ -1,10 +1,11 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using PikBot.Bot;
-using PikBot.Commands;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace PikBot
@@ -17,10 +18,10 @@ namespace PikBot
             public string Token { get; set; }
         }
 
-        private Credentials credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
-        private CommandFactory factory = CommandFactory.GetCommandFactory();
-        private readonly string self = "<@377237438529273856>";
-        private readonly string selfNick = "<@!377237438529273856>";
+        private DiscordSocketClient _client;
+        private CommandService _commands;
+        private IServiceProvider _services;
+        private Credentials _credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
 
         public static void Main(string[] args)
         {
@@ -29,15 +30,20 @@ namespace PikBot
 
         public async Task MainAsync()
         {
-            var discordClient = new DiscordSocketClient();
+            _client = new DiscordSocketClient();
+            _commands = new CommandService();
 
-            discordClient.Log += Log;
-            discordClient.MessageReceived += MessageReceived;
+            _client.Log += Log;
 
-            string token = credentials.Token;
+            _services = new ServiceCollection()
+                .AddSingleton(_client)
+                .AddSingleton(_commands)
+                .BuildServiceProvider();
 
-            await discordClient.LoginAsync(TokenType.Bot, token);
-            await discordClient.StartAsync();
+            await InstallCommandsAsync();
+
+            await _client.LoginAsync(TokenType.Bot, _credentials.Token);
+            await _client.StartAsync();
 
             await Task.Delay(-1);
         }
@@ -48,43 +54,26 @@ namespace PikBot
             return Task.CompletedTask;
         }
 
-        private async Task MessageReceived(SocketMessage message)
+        public async Task InstallCommandsAsync()
         {
-            if (message.Author.IsBot) return;
-            if (!(
-                message.Content.StartsWith(credentials.Prefix) ||
-                message.Content.StartsWith(self) ||
-                message.Content.StartsWith(selfNick)
-                )) return;
+            _client.MessageReceived += HandleCommandAsync;
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+        }
 
-            message.Content.Trim();
-            ISocketMessageChannel channel = message.Channel;
-            string[] args;
+        private async Task HandleCommandAsync(SocketMessage messageParam)
+        {
+            var message = messageParam as SocketUserMessage;
+            int argPos = 0;
 
-            if (message.Content.StartsWith(credentials.Prefix))
-                args = message.Content.Substring(credentials.Prefix.Length).Split(' ');
-            else
-                args = message.Content.Substring(message.Content.StartsWith(self) ? self.Length : selfNick.Length).Trim().Split(' ');
+            if (message == null) return;
+            if (!(message.HasStringPrefix(_credentials.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
 
-            string commandName = args[0];
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
-            try
-            {
-                Object obj = Enum.Parse(typeof(Commands.Commands), commandName, true);
+            var result = await _commands.ExecuteAsync(context, argPos, _services);
 
-                commandName = obj.ToString();
-            }
-            catch
-            {
-                await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": Invalid Command " + commandName));
-                return;
-            }
-
-            await Log(new LogMessage(LogSeverity.Info, "New Message", message.Author.Id + ": " + commandName));
-
-            args[0] = message.Id.ToString();
-            Command command = factory.GetCommand(channel, new User(message.Author.Id.ToString()), args, commandName);
-            await command.Run();
+            if (!result.IsSuccess)
+                await context.Channel.SendMessageAsync(result.ErrorReason);
         }
     }
 }

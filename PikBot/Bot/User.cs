@@ -1,19 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using Discord;
 
 namespace PikBot.Bot
 {
     class User
     {
-        private string id;
-        public HashSet<Permission> permissions = new HashSet<Permission>();
-        public bool InGame { get; set; }
+        //private IUser user;
+        //public ulong Id { get; set; }
+        //public bool InGame { get; set; }
 
-        public User(string id)
-        {
-            // Placeholders
-            this.id = id;
-            permissions.Add(Permission.ALL);
-            InGame = false;
-        }
+        //public User(IUser user)
+        //{
+        //    // Placeholders
+        //    this.user = user;
+        //    Id = user.Id;
+        //    InGame = false;
+        //}
     }
 }
