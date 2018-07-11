@@ -4,13 +4,23 @@ using System.Threading.Tasks;
 
 namespace PikBot.Commands
 {
-    public class HelpCommand : ModuleBase<SocketCommandContext>
+    public class SupportCommands : ModuleBase<SocketCommandContext>
     {
-        private CommandService _commands { get; }
+        private readonly CommandService _commands;
 
-        public HelpCommand(CommandService commands)
+        public SupportCommands(CommandService commands)
         {
             _commands = commands;
+        }
+
+        [Command("Commands")]
+        [Summary("See a list of available commands")]
+        public async Task Commands()
+        {
+            string commandList = "```";
+            foreach (CommandInfo command in _commands.Commands) commandList += command.Name + ", ";
+
+            await Context.Channel.SendMessageAsync(commandList.Substring(0, commandList.Length - 2) + "```");
         }
 
         [Command("Help")]
@@ -21,15 +31,8 @@ namespace PikBot.Commands
             {
                 commandName = commandName.ToLower();
 
-                //Stopwatch sw = new Stopwatch();
-
-                //sw.Start();
-
                 Dictionary<string, CommandInfo> commandsDict = new Dictionary<string, CommandInfo>();
-                foreach (CommandInfo command in _commands.Commands)
-                {
-                    commandsDict.Add(command.Name.ToLower(), command);
-                }
+                foreach (CommandInfo command in _commands.Commands) commandsDict.Add(command.Name.ToLower(), command);
 
                 try
                 {
@@ -39,21 +42,6 @@ namespace PikBot.Commands
                 {
                     await Context.Channel.SendMessageAsync("There is no such command :thinking:");
                 }
-
-                //sw.Stop();
-
-                //Console.WriteLine("Elapsed={0}", sw.Elapsed);
-
-                //sw.Restart();
-
-                //foreach (CommandInfo command in _commands.Commands)
-                //{
-                //    if (command.Name.ToLower().Equals(commandName)) await Context.Channel.SendMessageAsync(command.Summary);
-                //}
-
-                //sw.Stop();
-
-                //Console.WriteLine("Elapsed={0}", sw.Elapsed);
             }
             else
             {
