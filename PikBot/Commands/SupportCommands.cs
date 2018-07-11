@@ -1,5 +1,6 @@
 ﻿using Discord.Commands;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PikBot.Commands
@@ -25,11 +26,11 @@ namespace PikBot.Commands
 
         [Command("Help")]
         [Summary("Learn more about a command")]
-        public async Task Help([Summary("Command name")] string commandName = "")
+        public async Task Help([Remainder] [Summary("Command name")] string commandName = "")
         {
             if (!string.IsNullOrEmpty(commandName))
             {
-                commandName = commandName.ToLower();
+                commandName = commandName.Split(' ').First().ToLower();
 
                 Dictionary<string, CommandInfo> commandsDict = new Dictionary<string, CommandInfo>();
                 foreach (CommandInfo command in _commands.Commands) commandsDict.Add(command.Name.ToLower(), command);
@@ -40,7 +41,7 @@ namespace PikBot.Commands
                 }
                 catch
                 {
-                    await Context.Channel.SendMessageAsync("There is no such command :thinking:");
+                    await Context.Channel.SendMessageAsync("That doesn't look like something I can do :thinking:");
                 }
             }
             else
