@@ -3,8 +3,10 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using PikBot.Bot.ServiceManager;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -19,8 +21,10 @@ namespace PikBot
         }
 
         private DiscordSocketClient _client;
-        private CommandService _commands;
         private IServiceProvider _services;
+        private CommandService _commands;
+        private GameManager _games;
+
         private Credentials _credentials = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(@"./cred.json"));
 
         public static void Main(string[] args)
@@ -32,12 +36,14 @@ namespace PikBot
         {
             _client = new DiscordSocketClient();
             _commands = new CommandService();
+            _games = GameManager.GetManager(_client);
 
             _client.Log += Log;
 
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
+                .AddSingleton(_games)
                 .BuildServiceProvider();
 
             await InstallCommandsAsync();
@@ -71,6 +77,8 @@ namespace PikBot
             SocketCommandContext context = new SocketCommandContext(_client, message);
 
             var result = await _commands.ExecuteAsync(context, argPos, _services);
+
+            await Log(new LogMessage(LogSeverity.Info, "Command", _commands.Search(context, argPos).Commands.First().Command.Name ?? "Bad Command"));
 
             if (!result.IsSuccess)
                 await context.Channel.SendMessageAsync(result.ErrorReason);
